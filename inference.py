@@ -180,10 +180,9 @@ def main() -> None:
             timeout=float(os.getenv("OPENAI_TIMEOUT", "2")),
             max_retries=0,
         )
+    task_names = ["easy", "medium", "hard"]
     if task_name in {"easy", "medium", "hard"}:
-        task_names = [task_name]
-    else:
-        task_names = ["easy", "medium", "hard"]
+        task_names = [task_name] + [name for name in task_names if name != task_name]
 
     for current_task in task_names:
         run_episode(client, MODEL_NAME, current_task)
