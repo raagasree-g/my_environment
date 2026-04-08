@@ -1,3 +1,6 @@
+from graders.easy import grade as grade_easy
+from graders.hard import grade as grade_hard
+from graders.medium import grade as grade_medium
 from models.schemas import Task
 
 
@@ -76,6 +79,20 @@ TASKS = {
 TASKS["task_easy"] = TASKS["easy"]
 TASKS["task_medium"] = TASKS["medium"]
 TASKS["task_hard"] = TASKS["hard"]
+
+TASK_GRADERS = {
+    "easy": grade_easy,
+    "medium": grade_medium,
+    "hard": grade_hard,
+    "task_easy": grade_easy,
+    "task_medium": grade_medium,
+    "task_hard": grade_hard,
+}
+
+TASKS_WITH_GRADERS = {
+    name: {"task": task, "grader": TASK_GRADERS[name]}
+    for name, task in TASKS.items()
+}
 
 # Backward-compatible single-task export for older imports.
 TASK = TASKS["easy"]

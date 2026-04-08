@@ -1,1 +1,1 @@
-from .easy import TASKS
+from .easy import TASKS, TASKS_WITH_GRADERS, TASK_GRADERS
