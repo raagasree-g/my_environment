@@ -12,8 +12,9 @@ from tasks import TASKS, TASK_REGISTRY
 
 app = FastAPI()
 DEFAULT_SESSION_ID = "default"
+DEFAULT_TASK = os.getenv("TASK_NAME", "cycle")
 _envs: Dict[str, CustomerSupportEnv] = {
-    DEFAULT_SESSION_ID: CustomerSupportEnv(task=os.getenv("TASK_NAME", "easy")),
+    DEFAULT_SESSION_ID: CustomerSupportEnv(task=DEFAULT_TASK),
 }
 _lock = Lock()
 
@@ -21,7 +22,7 @@ _lock = Lock()
 def _get_env(session_id: str = DEFAULT_SESSION_ID) -> CustomerSupportEnv:
     with _lock:
         if session_id not in _envs:
-            _envs[session_id] = CustomerSupportEnv(task=os.getenv("TASK_NAME", "easy"))
+            _envs[session_id] = CustomerSupportEnv(task=DEFAULT_TASK)
         return _envs[session_id]
 
 
@@ -109,8 +110,8 @@ def mcp(payload: Dict[str, Any] | None = None):
 @app.post("/reset")
 def reset(payload: Dict[str, Any] | None = None):
     payload = payload or {}
-    task = payload.get("task", os.getenv("TASK_NAME", "easy"))
-    if task not in TASK_REGISTRY:
+    task = payload.get("task", DEFAULT_TASK)
+    if task != "cycle" and task not in TASK_REGISTRY:
         raise HTTPException(status_code=400, detail=f"Unknown task '{task}'")
     session_id = str(payload.get("session_id") or uuid4())
     new_env = CustomerSupportEnv(task=task)
