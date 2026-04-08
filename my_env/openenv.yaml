@@ -7,9 +7,6 @@ tasks:
   - easy
   - medium
   - hard
-  - task_easy
-  - task_medium
-  - task_hard
 observation_space:
   customer_query: string
   detected_issues: list[string]
@@ -39,14 +36,5 @@ task_graders:
     module: graders.medium
     function: grade
   hard:
-    module: graders.hard
-    function: grade
-  task_easy:
-    module: graders.easy
-    function: grade
-  task_medium:
-    module: graders.medium
-    function: grade
-  task_hard:
     module: graders.hard
     function: grade

@@ -75,18 +75,10 @@ TASKS = {
     ),
 }
 
-# Backward-compatible aliases for validators that look for explicit task_* names.
-TASKS["task_easy"] = TASKS["easy"]
-TASKS["task_medium"] = TASKS["medium"]
-TASKS["task_hard"] = TASKS["hard"]
-
 TASK_GRADERS = {
     "easy": grade_easy,
     "medium": grade_medium,
     "hard": grade_hard,
-    "task_easy": grade_easy,
-    "task_medium": grade_medium,
-    "task_hard": grade_hard,
 }
 
 TASKS_WITH_GRADERS = {

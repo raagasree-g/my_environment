@@ -111,7 +111,4 @@ TASK_GRADERS = {
     "easy": grade_easy,
     "medium": grade_medium,
     "hard": grade_hard,
-    "task_easy": grade_easy,
-    "task_medium": grade_medium,
-    "task_hard": grade_hard,
 }
