@@ -1,3 +1,4 @@
+from graders.medium import grade as grade_medium
 from models.schemas import Task
 
 
@@ -22,4 +23,12 @@ TASK = Task(
         "refund_request": ["refund", "return authorization", "refund eligibility", "credit"],
     },
     max_steps=8,
+    grader=grade_medium,
 )
+
+TASK_DEF = {
+    "name": "medium",
+    "query": TASK.customer_query,
+    "grader": grade_medium,
+    "task": TASK,
+}

@@ -1,3 +1,4 @@
+from graders.hard import grade as grade_hard
 from models.schemas import Task
 
 
@@ -28,4 +29,12 @@ TASK = Task(
         "Premium angry customers deserve urgency, but escalation alone is incomplete.",
     ],
     max_steps=9,
+    grader=grade_hard,
 )
+
+TASK_DEF = {
+    "name": "hard",
+    "query": TASK.customer_query,
+    "grader": grade_hard,
+    "task": TASK,
+}

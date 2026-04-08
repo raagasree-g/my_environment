@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from models.schemas import SupportState, Task, action_to_dict, contains_any, normalize_issue_text
-from tasks import TASKS, TASK_GRADERS
+from tasks import TASKS, TASK_GRADERS, tasks
 
 
 def _normalize_reward(raw_reward: float) -> float:
@@ -20,13 +20,18 @@ class CustomerSupportEnv:
         if task not in TASKS:
             raise ValueError(f"Unknown task '{task}'")
         self.task_name = task
+        self.tasks = tasks
+        self.current_task: Optional[Dict[str, Any]] = None
         self.task: Task = TASKS[task]
-        self.grader = self.task.grader or TASK_GRADERS[task]
+        self.grader = TASK_GRADERS[task]
         self._state: Optional[SupportState] = None
         self._done = False
         self._last_score = 0.0
 
     def reset(self) -> Dict[str, Any]:
+        self.current_task = next(item for item in self.tasks if item["name"] == self.task_name)
+        self.task = self.current_task["task"]
+        self.grader = self.current_task["grader"]
         self._state = SupportState(
             customer_query=self.task.customer_query,
             true_issues=list(self.task.true_issues),
@@ -46,6 +51,10 @@ class CustomerSupportEnv:
         if self._state is None:
             self.reset()
         return self._state.to_full_state()
+
+    def close(self) -> None:
+        self._state = None
+        self._done = False
 
     def step(self, action: Dict[str, str]) -> Tuple[Dict[str, Any], float, bool, Dict[str, Any]]:
         if self._state is None:
@@ -110,7 +119,8 @@ class CustomerSupportEnv:
 
         self._state.conversation_history.append(event)
 
-        self._last_score = self.grader(
+        grader = self.current_task["grader"]
+        self._last_score = grader(
             self.task,
             self._state.to_full_state(),
             self._state.conversation_history,

@@ -117,18 +117,19 @@ def heuristic_action(observation: Dict[str, Any]) -> Dict[str, str]:
 
 
 def main() -> None:
-    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-    model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
-    hf_token = os.getenv("HF_TOKEN")
+    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+    HF_TOKEN = os.getenv("HF_TOKEN")
+    LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
     task_name = os.getenv("TASK_NAME", "hard").strip().lower()
     if task_name not in {"easy", "medium", "hard"}:
         task_name = "hard"
 
     client = None
-    if hf_token:
+    if HF_TOKEN:
         client = OpenAI(
-            base_url=api_base_url,
-            api_key=hf_token,
+            base_url=API_BASE_URL,
+            api_key=HF_TOKEN,
             timeout=float(os.getenv("OPENAI_TIMEOUT", "2")),
             max_retries=0,
         )
@@ -137,31 +138,44 @@ def main() -> None:
     rewards: List[float] = []
     model_available = client is not None
 
-    print(f"[START] task={task_name} env=CustomerSupportEnv model={model_name}", flush=True)
+    print(f"[START] task={task_name} env=CustomerSupportEnv model={MODEL_NAME}", flush=True)
     done = False
     step_idx = 0
     info: Dict[str, Any] = {"score": 0.0}
-    while not done and step_idx < env.task.max_steps:
-        step_idx += 1
-        if model_available and client is not None:
-            try:
-                action = model_action(client, model_name, observation, step_idx)
-            except Exception:
-                model_available = False
+    try:
+        while not done and step_idx < env.task.max_steps:
+            step_idx += 1
+            if model_available and client is not None:
+                try:
+                    action = model_action(client, MODEL_NAME, observation, step_idx)
+                except Exception:
+                    model_available = False
+                    action = heuristic_action(observation)
+            else:
                 action = heuristic_action(observation)
-        else:
-            action = heuristic_action(observation)
-        observation, reward, done, info = env.step(action)
-        rewards.append(float(reward))
-        done_str = "true" if done else "false"
-        print(
-            f"[STEP] step={step_idx} action={compact_json(action)} reward={reward:.2f} done={done_str} error=null",
-            flush=True,
-        )
+
+            error_msg = "null"
+            try:
+                observation, reward, done, info = env.step(action)
+            except Exception as exc:
+                reward = 0.05
+                done = True
+                info = {"score": 0.05}
+                error_msg = compact_json(str(exc))
+
+            rewards.append(float(reward))
+            done_str = "true" if done else "false"
+            print(
+                f"[STEP] step={step_idx} action={compact_json(action)} reward={reward:.2f} done={done_str} error={error_msg}",
+                flush=True,
+            )
+    finally:
+        env.close()
 
     success = "true" if bool(observation.get("resolved")) else "false"
+    score = max(0.0, min(1.0, float(info.get("score", 0.0))))
     reward_str = ",".join(f"{reward:.2f}" for reward in rewards)
-    print(f"[END] success={success} steps={step_idx} score={float(info.get('score', 0.0)):.1f} rewards={reward_str}", flush=True)
+    print(f"[END] success={success} steps={step_idx} score={score:.2f} rewards={reward_str}", flush=True)
 
 
 if __name__ == "__main__":
