@@ -8,6 +8,12 @@ from models.schemas import SupportState, Task, action_to_dict, contains_any, nor
 from tasks import TASKS
 
 
+def _normalize_reward(raw_reward: float) -> float:
+    """Map shaped step reward into the OpenEnv-compatible [0, 1] range."""
+
+    return max(0.0, min(1.0, (raw_reward + 1.0) / 2.0))
+
+
 class CustomerSupportEnv:
     action_space = {"type": "classify | ask | resolve | escalate", "content": "string"}
 
@@ -88,13 +94,16 @@ class CustomerSupportEnv:
             messages.append("Exceeded step limit.")
             self._done = True
 
+        normalized_reward = _normalize_reward(reward)
+
         event = {
             "step": self._state.time_elapsed,
             "action_type": action_type,
             "content": content,
             "detected_before": detected_before,
             "issues": inferred_issues,
-            "reward": round(reward, 4),
+            "raw_reward": round(reward, 4),
+            "reward": round(normalized_reward, 4),
             "feedback": messages,
         }
 
@@ -109,8 +118,9 @@ class CustomerSupportEnv:
         if self._state.resolved:
             self._done = True
 
-        return self._state.to_public_observation(), round(reward, 4), self._done, {
+        return self._state.to_public_observation(), round(normalized_reward, 4), self._done, {
             "score": self._last_score,
+            "raw_reward": round(reward, 4),
             "feedback": messages,
         }
 

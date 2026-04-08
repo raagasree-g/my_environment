@@ -4,7 +4,7 @@ emoji: 🤖
 colorFrom: blue
 colorTo: green
 sdk: docker
-app_file: app.py
+app_file: server/app.py
 ---
 
 # Intelligent Customer Support Decision System
@@ -58,7 +58,7 @@ The project includes three deterministic tasks:
 
 ## Reward Design
 
-Rewards are trajectory-shaped rather than binary:
+Rewards are trajectory-shaped rather than binary and are returned to agents in the normalized range `[0, 1]`:
 
 - Correct new issue detection receives positive reward.
 - Meaningful clarification questions receive positive reward, especially when they address actual uncertainty.
@@ -103,6 +103,28 @@ Run baseline inference:
 python inference.py
 ```
 
+Run the local API server:
+
+```bash
+python -m server.app
+```
+
+API endpoints:
+
+```text
+GET  /
+POST /reset
+POST /step
+GET  /state
+```
+
+Example API calls:
+
+```bash
+curl -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d '{"task":"hard"}'
+curl -X POST http://localhost:7860/step -H "Content-Type: application/json" -d '{"action":{"type":"classify","content":"account_security, product_defect, warranty_claim"}}'
+```
+
 Optional environment variables:
 
 ```bash
@@ -116,7 +138,13 @@ Docker:
 
 ```bash
 docker build -t customer-support-openenv .
-docker run --rm -e API_BASE_URL="$API_BASE_URL" -e MODEL_NAME="$MODEL_NAME" -e HF_TOKEN="$HF_TOKEN" customer-support-openenv
+docker run --rm -p 7860:7860 customer-support-openenv
+```
+
+To run inference inside the Docker image instead of the web server:
+
+```bash
+docker run --rm -e API_BASE_URL="$API_BASE_URL" -e MODEL_NAME="$MODEL_NAME" -e HF_TOKEN="$HF_TOKEN" customer-support-openenv python inference.py
 ```
 
 The inference script prints only:

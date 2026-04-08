@@ -22,7 +22,7 @@ action_space:
   type: enum[classify,ask,resolve,escalate]
   content: string
 reward:
-  range: variable
+  range: [0, 1]
   type: trajectory-shaped
   description: Rewards correct issue detection, useful clarification, complete resolution, appropriate escalation, and efficiency; penalizes false classifications, premature resolution, unnecessary escalation, and excessive steps.
 grader:
