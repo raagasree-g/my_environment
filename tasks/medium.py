@@ -2,7 +2,12 @@ from graders.medium import grade as grade_medium
 from models.schemas import Task
 
 name = "medium"
+task_name = name
+TASK_NAME = name
+enabled = True
+ENABLED = True
 grader = grade_medium
+GRADER = grader
 
 
 TASK = Task(

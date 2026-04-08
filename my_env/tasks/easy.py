@@ -2,7 +2,12 @@ from graders.easy import grade as grade_easy
 from models.schemas import Task
 
 name = "easy"
+task_name = name
+TASK_NAME = name
+enabled = True
+ENABLED = True
 grader = grade_easy
+GRADER = grader
 
 
 TASK = Task(
