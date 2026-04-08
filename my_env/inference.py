@@ -119,21 +119,23 @@ def heuristic_action(observation: Dict[str, Any]) -> Dict[str, str]:
 def main() -> None:
     api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
     model_name = os.getenv("MODEL_NAME", "gpt-4o-mini")
-    hf_token = os.getenv("HF_TOKEN") or "missing-token"
+    hf_token = os.getenv("HF_TOKEN")
     task_name = os.getenv("TASK_NAME", "hard").strip().lower()
     if task_name not in {"easy", "medium", "hard"}:
         task_name = "hard"
 
-    client = OpenAI(
-        base_url=api_base_url,
-        api_key=hf_token,
-        timeout=float(os.getenv("OPENAI_TIMEOUT", "2")),
-        max_retries=0,
-    )
+    client = None
+    if hf_token:
+        client = OpenAI(
+            base_url=api_base_url,
+            api_key=hf_token,
+            timeout=float(os.getenv("OPENAI_TIMEOUT", "2")),
+            max_retries=0,
+        )
     env = CustomerSupportEnv(task=task_name)
     observation = env.reset()
     rewards: List[float] = []
-    model_available = hf_token != "missing-token"
+    model_available = client is not None
 
     print(f"[START] task={task_name} env=CustomerSupportEnv model={model_name}", flush=True)
     done = False
@@ -141,7 +143,7 @@ def main() -> None:
     info: Dict[str, Any] = {"score": 0.0}
     while not done and step_idx < env.task.max_steps:
         step_idx += 1
-        if model_available:
+        if model_available and client is not None:
             try:
                 action = model_action(client, model_name, observation, step_idx)
             except Exception:
