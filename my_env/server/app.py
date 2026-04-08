@@ -4,6 +4,7 @@ from typing import Any, Dict
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse
 import uvicorn
 
 from env import CustomerSupportEnv
@@ -24,14 +25,37 @@ def _get_env(session_id: str = DEFAULT_SESSION_ID) -> CustomerSupportEnv:
         return _envs[session_id]
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def root():
-    return {
-        "message": "OpenEnv server running",
-        "tasks": sorted(TASKS),
-        "endpoints": ["/reset", "/step", "/state"],
-        "default_session_id": DEFAULT_SESSION_ID,
-    }
+    task_items = "".join(f"<li>{task}</li>" for task in sorted(TASKS))
+    return f"""
+    <!doctype html>
+    <html>
+      <head>
+        <title>OpenEnv Customer Support</title>
+        <style>
+          body {{ font-family: Arial, sans-serif; margin: 40px; line-height: 1.5; max-width: 900px; }}
+          code, pre {{ background: #f4f4f4; padding: 2px 5px; border-radius: 4px; }}
+          pre {{ padding: 12px; overflow-x: auto; }}
+        </style>
+      </head>
+      <body>
+        <h1>OpenEnv Customer Support Environment</h1>
+        <p>Status: <strong>running</strong></p>
+        <p>This Space exposes an OpenEnv-compatible API for multi-step customer support decision tasks.</p>
+        <h2>Available Tasks</h2>
+        <ul>{task_items}</ul>
+        <h2>Required API Endpoints</h2>
+        <ul>
+          <li><code>POST /reset</code></li>
+          <li><code>POST /step</code></li>
+          <li><code>GET /state</code></li>
+        </ul>
+        <h2>Quick Test</h2>
+        <pre>curl -X POST /reset -H "Content-Type: application/json" -d '{{"task":"hard","session_id":"demo"}}'</pre>
+      </body>
+    </html>
+    """
 
 
 @app.get("/health")
