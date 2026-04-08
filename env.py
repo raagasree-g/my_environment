@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
 from models.schemas import SupportState, Task, action_to_dict, contains_any, normalize_issue_text
-from tasks import TASKS, TASK_GRADERS, tasks
+from tasks import TASKS, TASK_GRADERS, TASK_REGISTRY
 
 
 def _normalize_reward(raw_reward: float) -> float:
@@ -17,12 +17,12 @@ class CustomerSupportEnv:
     action_space = {"type": "classify | ask | resolve | escalate", "content": "string"}
 
     def __init__(self, task: str = "easy"):
-        if task not in TASKS:
+        if task not in TASK_REGISTRY:
             raise ValueError(f"Unknown task '{task}'")
         self.task_name = task
-        self.tasks = tasks
+        self.tasks = TASKS
         self.current_task: Optional[Dict[str, Any]] = None
-        self.task: Task = TASKS[task]
+        self.task: Task = TASK_REGISTRY[task]
         self.grader = TASK_GRADERS[task]
         self._state: Optional[SupportState] = None
         self._done = False

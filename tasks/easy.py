@@ -33,5 +33,6 @@ TASK_DEF = {
 }
 
 query = TASK.customer_query
-TASKS = {name: TASK}
-tasks = [TASK_DEF]
+TASK_REGISTRY = {name: TASK}
+TASKS = [TASK_DEF]
+tasks = TASKS

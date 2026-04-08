@@ -3,7 +3,7 @@ from .medium import TASK as MEDIUM_TASK, TASK_DEF as MEDIUM_TASK_DEF
 from .hard import TASK as HARD_TASK, TASK_DEF as HARD_TASK_DEF
 
 
-TASKS = {
+TASK_REGISTRY = {
     "easy": EASY_TASK,
     "medium": MEDIUM_TASK,
     "hard": HARD_TASK,
@@ -17,7 +17,8 @@ TASK_GRADERS = {
 
 TASKS_WITH_GRADERS = {
     name: {"task": task, "grader": TASK_GRADERS[name]}
-    for name, task in TASKS.items()
+    for name, task in TASK_REGISTRY.items()
 }
 
-tasks = [EASY_TASK_DEF, MEDIUM_TASK_DEF, HARD_TASK_DEF]
+TASKS = [EASY_TASK_DEF, MEDIUM_TASK_DEF, HARD_TASK_DEF]
+tasks = TASKS

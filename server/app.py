@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse
 import uvicorn
 
 from env import CustomerSupportEnv
-from tasks import TASKS
+from tasks import TASKS, TASK_REGISTRY
 
 app = FastAPI()
 DEFAULT_SESSION_ID = "default"
@@ -27,7 +27,7 @@ def _get_env(session_id: str = DEFAULT_SESSION_ID) -> CustomerSupportEnv:
 
 @app.get("/", response_class=HTMLResponse)
 def root():
-    task_items = "".join(f"<li>{task}</li>" for task in sorted(TASKS))
+    task_items = "".join(f"<li>{task['name']}</li>" for task in TASKS)
     return f"""
     <!doctype html>
     <html>
@@ -68,7 +68,7 @@ def metadata():
     return {
         "name": "intelligent-customer-support-decision-system",
         "description": "Multi-step customer support RL environment with task-specific grading.",
-        "tasks": sorted(TASKS),
+        "tasks": [task["name"] for task in TASKS],
     }
 
 
@@ -110,7 +110,7 @@ def mcp(payload: Dict[str, Any] | None = None):
 def reset(payload: Dict[str, Any] | None = None):
     payload = payload or {}
     task = payload.get("task", os.getenv("TASK_NAME", "easy"))
-    if task not in TASKS:
+    if task not in TASK_REGISTRY:
         raise HTTPException(status_code=400, detail=f"Unknown task '{task}'")
     session_id = str(payload.get("session_id") or uuid4())
     new_env = CustomerSupportEnv(task=task)
