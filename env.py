@@ -14,24 +14,41 @@ def _normalize_reward(raw_reward: float) -> float:
 
 
 class CustomerSupportEnv:
+    _cycle_index = 0
     action_space = {"type": "classify | ask | resolve | escalate", "content": "string"}
 
-    def __init__(self, task: str = "easy"):
-        if task not in TASK_REGISTRY:
+    def __init__(self, task: str = "cycle"):
+        if task != "cycle" and task not in TASK_REGISTRY:
             raise ValueError(f"Unknown task '{task}'")
         self.task_name = task
+        self._cycle_tasks = task == "cycle"
         self.tasks = TASKS
         self.current_task: Optional[Dict[str, Any]] = None
-        self.task: Task = TASK_REGISTRY[task]
-        self.grader = TASK_GRADERS[task]
+        initial_task_name = self.tasks[0]["name"] if self._cycle_tasks else task
+        self.task: Task = TASK_REGISTRY[initial_task_name]
+        self.grader = TASK_GRADERS[initial_task_name]
         self._state: Optional[SupportState] = None
         self._done = False
         self._last_score = 0.0
 
-    def reset(self) -> Dict[str, Any]:
-        self.current_task = next(item for item in self.tasks if item["name"] == self.task_name)
+    def _select_task(self) -> None:
+        if self._cycle_tasks:
+            current = self.tasks[CustomerSupportEnv._cycle_index % len(self.tasks)]
+            CustomerSupportEnv._cycle_index += 1
+            self.task_name = current["name"]
+            self.current_task = current
+        else:
+            self.current_task = next(item for item in self.tasks if item["name"] == self.task_name)
         self.task = self.current_task["task"]
         self.grader = self.current_task["grader"]
+
+    def _public_observation(self) -> Dict[str, Any]:
+        observation = self._state.to_public_observation()
+        observation["task_name"] = self.task_name
+        return observation
+
+    def reset(self) -> Dict[str, Any]:
+        self._select_task()
         self._state = SupportState(
             customer_query=self.task.customer_query,
             true_issues=list(self.task.true_issues),
@@ -45,12 +62,14 @@ class CustomerSupportEnv:
         )
         self._done = False
         self._last_score = 0.0
-        return self._state.to_public_observation()
+        return self._public_observation()
 
     def state(self) -> Dict[str, Any]:
         if self._state is None:
             self.reset()
-        return self._state.to_full_state()
+        state = self._state.to_full_state()
+        state["task_name"] = self.task_name
+        return state
 
     def close(self) -> None:
         self._state = None
@@ -62,7 +81,7 @@ class CustomerSupportEnv:
 
         if self._done:
             terminal_score = self._last_score or 0.05
-            return self._state.to_public_observation(), terminal_score, True, {"score": terminal_score}
+            return self._public_observation(), terminal_score, True, {"score": terminal_score, "task_name": self.task_name}
 
         parsed = action_to_dict(action)
         action_type = parsed["type"]
@@ -130,8 +149,9 @@ class CustomerSupportEnv:
         if self._state.resolved:
             self._done = True
 
-        return self._state.to_public_observation(), self._last_score, self._done, {
+        return self._public_observation(), self._last_score, self._done, {
             "score": self._last_score,
+            "task_name": self.task_name,
             "raw_reward": round(reward, 4),
             "shaped_reward": round(normalized_reward, 4),
             "feedback": messages,
@@ -246,5 +266,5 @@ class CustomerSupportEnv:
         return -0.25
 
 
-def make_env(task: str = "easy") -> CustomerSupportEnv:
+def make_env(task: str = "cycle") -> CustomerSupportEnv:
     return CustomerSupportEnv(task)
