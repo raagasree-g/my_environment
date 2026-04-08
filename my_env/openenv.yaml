@@ -7,6 +7,9 @@ tasks:
   - easy
   - medium
   - hard
+  - task_easy
+  - task_medium
+  - task_hard
 observation_space:
   customer_query: string
   detected_issues: list[string]
@@ -22,9 +25,9 @@ action_space:
   type: enum[classify,ask,resolve,escalate]
   content: string
 reward:
-  range: [0, 1]
+  range: [0.05, 0.95]
   type: trajectory-shaped
-  description: Rewards correct issue detection, useful clarification, complete resolution, appropriate escalation, and efficiency; penalizes false classifications, premature resolution, unnecessary escalation, and excessive steps.
+  description: Rewards correct issue detection, useful clarification, complete resolution, appropriate escalation, and efficiency; penalizes false classifications, premature resolution, unnecessary escalation, and excessive steps. Public rewards and grader scores are clamped to the strict non-binary interval (0, 1).
 grader:
   module: graders.grader
   function: grade

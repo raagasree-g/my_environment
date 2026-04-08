@@ -9,9 +9,9 @@ from tasks import TASKS
 
 
 def _normalize_reward(raw_reward: float) -> float:
-    """Map shaped step reward into the OpenEnv-compatible [0, 1] range."""
+    """Map shaped step reward into the validator-safe strict interval (0, 1)."""
 
-    return max(0.0, min(1.0, (raw_reward + 1.0) / 2.0))
+    return max(0.05, min(0.95, (raw_reward + 1.0) / 2.0))
 
 
 class CustomerSupportEnv:
@@ -52,7 +52,7 @@ class CustomerSupportEnv:
             self.reset()
 
         if self._done:
-            return self._state.to_public_observation(), 0.0, True, {"score": self._last_score}
+            return self._state.to_public_observation(), 0.05, True, {"score": self._last_score}
 
         parsed = action_to_dict(action)
         action_type = parsed["type"]
