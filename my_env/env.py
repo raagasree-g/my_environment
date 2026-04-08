@@ -60,7 +60,7 @@ class CustomerSupportEnv:
 
         detected_before = list(self._state.detected_issues)
 
-        # ⬇️ TIME-SCALED PENALTY (efficiency pressure)
+        # Time-scaled penalty creates efficiency pressure.
         reward = -0.02 * (self._state.time_elapsed + 1)
 
         messages: List[str] = []
@@ -125,7 +125,7 @@ class CustomerSupportEnv:
         }
 
     # -----------------------------
-    # 🔥 CLASSIFY (precision-focused)
+    # CLASSIFY: precision-focused
     # -----------------------------
     def _handle_classify(self, issues: List[str], messages: List[str]) -> float:
         if not issues:
@@ -134,7 +134,7 @@ class CustomerSupportEnv:
         reward = 0.0
         true_issues = set(self.task.true_issues)
 
-        # ❗ OVER-CLASSIFICATION PENALTY
+        # Over-classification penalty.
         if len(issues) > len(true_issues):
             extra = len(issues) - len(true_issues)
             reward -= 0.15 * extra
@@ -149,7 +149,7 @@ class CustomerSupportEnv:
             else:
                 reward -= 0.25
 
-        # ❗ DUPLICATE PENALTY
+        # Duplicate penalty.
         if len(set(issues)) < len(issues):
             reward -= 0.1
             messages.append("Duplicate issue guesses.")
@@ -160,7 +160,7 @@ class CustomerSupportEnv:
         return reward
 
     # -----------------------------
-    # 🔥 ASK (quality + reasoning)
+    # ASK: quality + reasoning
     # -----------------------------
     def _handle_ask(self, content: str, messages: List[str]) -> float:
         reward = 0.0
@@ -170,24 +170,24 @@ class CustomerSupportEnv:
             if contains_any(content, self.task.required_clarifications.get(issue, [])):
                 matched.append(issue)
 
-        # ❗ FORCE MEANINGFUL QUESTIONS
+        # Force meaningful questions.
         if matched and len(content.split()) > 6:
             reward += 0.2 + 0.08 * len(set(matched))
         else:
             reward -= 0.18
 
-        # ❗ EMOTIONAL INTELLIGENCE BONUS
+        # Emotional intelligence bonus.
         if self.task.sentiment == "angry" and contains_any(content, ["sorry", "understand", "urgent"]):
             reward += 0.08
 
-        # ❗ SPAM PENALTY
+        # Spam penalty.
         if len(self._state.conversation_history) >= 4:
             reward -= 0.1
 
         return reward
 
     # -----------------------------
-    # 🔥 RESOLVE (graded, not binary)
+    # RESOLVE: graded, not binary
     # -----------------------------
     def _handle_resolve(self, content: str, messages: List[str]) -> float:
         true_issues = set(self.task.true_issues)
@@ -203,7 +203,7 @@ class CustomerSupportEnv:
 
         coverage = len(set(covered)) / len(true_issues)
 
-        # ❗ HALLUCINATION PENALTY
+        # Hallucination penalty.
         if "refund" in content and "refund_request" not in true_issues:
             return -0.25
 
@@ -217,7 +217,7 @@ class CustomerSupportEnv:
         return -0.3
 
     # -----------------------------
-    # 🔥 ESCALATE (context-aware)
+    # ESCALATE: context-aware
     # -----------------------------
     def _handle_escalate(self, content: str, messages: List[str]) -> float:
         self._state.escalated = True

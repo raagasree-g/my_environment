@@ -11,6 +11,8 @@ app_file: server/app.py
 
 This OpenEnv submission implements a realistic multi-step reinforcement learning environment for customer support decision-making. The agent must infer hidden customer issues from an initial query, ask useful clarification questions when uncertainty remains, classify issues, resolve the case, and escalate only when escalation is justified.
 
+In the GitHub repository, the OpenEnv project files live under the `my_env/` directory. The Hugging Face Space deployment places these same files at the Space root.
+
 The environment intentionally keeps `true_issues` out of the observations returned by `reset()` and `step()`. Full hidden state is available through `state()` for validators and graders.
 
 ## State and Observation
@@ -118,11 +120,13 @@ POST /step
 GET  /state
 ```
 
+`/reset` returns a `session_id`. Pass that `session_id` to `/step` or `/state` to isolate independent evaluation runs. If no session is provided, the server uses a deterministic default session for simple validators.
+
 Example API calls:
 
 ```bash
 curl -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d '{"task":"hard"}'
-curl -X POST http://localhost:7860/step -H "Content-Type: application/json" -d '{"action":{"type":"classify","content":"account_security, product_defect, warranty_claim"}}'
+curl -X POST http://localhost:7860/step -H "Content-Type: application/json" -d '{"session_id":"default","action":{"type":"classify","content":"account_security, product_defect, warranty_claim"}}'
 ```
 
 Optional environment variables:
