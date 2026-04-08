@@ -142,6 +142,11 @@ def state(session_id: str = DEFAULT_SESSION_ID):
     return _get_env(session_id).state()
 
 
+@app.get("/{full_path:path}", response_class=HTMLResponse)
+def fallback_page(full_path: str):
+    return root()
+
+
 def main():
     port = int(os.getenv("PORT", "7860"))
     uvicorn.run(app, host="0.0.0.0", port=port)
