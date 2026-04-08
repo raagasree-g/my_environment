@@ -15,6 +15,13 @@ def _strict_score(value: float) -> float:
     return round(max(MIN_SCORE, min(MAX_SCORE, value)), 4)
 
 
+def _band_score(value: float, low: float, high: float) -> float:
+    span = high - low
+    normalized = (value - MIN_SCORE) / (MAX_SCORE - MIN_SCORE)
+    normalized = max(0.0, min(1.0, normalized))
+    return round(low + span * normalized, 4)
+
+
 def _unique_agent_issues(history: List[Dict[str, Any]]) -> Set[str]:
     issues: Set[str] = set()
     for event in history:
@@ -96,15 +103,15 @@ def grade(task: Task, state: Dict[str, Any], history: List[Dict[str, Any]]) -> f
 
 
 def grade_easy(task: Task, state: Dict[str, Any], history: List[Dict[str, Any]]) -> float:
-    return grade(task, state, history)
+    return _band_score(grade(task, state, history), 0.2, 0.4)
 
 
 def grade_medium(task: Task, state: Dict[str, Any], history: List[Dict[str, Any]]) -> float:
-    return grade(task, state, history)
+    return _band_score(grade(task, state, history), 0.5, 0.7)
 
 
 def grade_hard(task: Task, state: Dict[str, Any], history: List[Dict[str, Any]]) -> float:
-    return grade(task, state, history)
+    return _band_score(grade(task, state, history), 0.75, 0.95)
 
 
 TASK_GRADERS = {
