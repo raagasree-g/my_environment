@@ -31,3 +31,22 @@ reward:
 grader:
   module: graders.grader
   function: grade
+task_graders:
+  easy:
+    module: graders.easy
+    function: grade
+  medium:
+    module: graders.medium
+    function: grade
+  hard:
+    module: graders.hard
+    function: grade
+  task_easy:
+    module: graders.easy
+    function: grade
+  task_medium:
+    module: graders.medium
+    function: grade
+  task_hard:
+    module: graders.hard
+    function: grade

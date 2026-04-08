@@ -34,6 +34,54 @@ def root():
     }
 
 
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+
+@app.get("/metadata")
+def metadata():
+    return {
+        "name": "intelligent-customer-support-decision-system",
+        "description": "Multi-step customer support RL environment with task-specific grading.",
+        "tasks": sorted(TASKS),
+    }
+
+
+@app.get("/schema")
+def schema():
+    return {
+        "action": {"type": "classify | ask | resolve | escalate", "content": "string"},
+        "observation": {
+            "customer_query": "string",
+            "detected_issues": "list[string]",
+            "customer_type": "normal | premium",
+            "sentiment": "calm | angry",
+            "conversation_history": "list[object]",
+            "time_elapsed": "int",
+            "resolved": "bool",
+            "escalated": "bool",
+        },
+        "state": {
+            "true_issues": "list[string]",
+            "customer_query": "string",
+            "detected_issues": "list[string]",
+            "customer_type": "normal | premium",
+            "sentiment": "calm | angry",
+            "conversation_history": "list[object]",
+            "time_elapsed": "int",
+            "resolved": "bool",
+            "escalated": "bool",
+        },
+    }
+
+
+@app.post("/mcp")
+def mcp(payload: Dict[str, Any] | None = None):
+    request_id = (payload or {}).get("id")
+    return {"jsonrpc": "2.0", "id": request_id, "result": {"status": "ok"}}
+
+
 @app.post("/reset")
 def reset(payload: Dict[str, Any] | None = None):
     payload = payload or {}
