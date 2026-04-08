@@ -52,7 +52,8 @@ class CustomerSupportEnv:
             self.reset()
 
         if self._done:
-            return self._state.to_public_observation(), 0.05, True, {"score": self._last_score}
+            terminal_score = self._last_score or 0.05
+            return self._state.to_public_observation(), terminal_score, True, {"score": terminal_score}
 
         parsed = action_to_dict(action)
         action_type = parsed["type"]
@@ -103,7 +104,7 @@ class CustomerSupportEnv:
             "detected_before": detected_before,
             "issues": inferred_issues,
             "raw_reward": round(reward, 4),
-            "reward": round(normalized_reward, 4),
+            "shaped_reward": round(normalized_reward, 4),
             "feedback": messages,
         }
 
@@ -114,13 +115,15 @@ class CustomerSupportEnv:
             self._state.to_full_state(),
             self._state.conversation_history,
         )
+        event["reward"] = self._last_score
 
         if self._state.resolved:
             self._done = True
 
-        return self._state.to_public_observation(), round(normalized_reward, 4), self._done, {
+        return self._state.to_public_observation(), self._last_score, self._done, {
             "score": self._last_score,
             "raw_reward": round(reward, 4),
+            "shaped_reward": round(normalized_reward, 4),
             "feedback": messages,
         }
 
