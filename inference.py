@@ -116,38 +116,25 @@ def heuristic_action(observation: Dict[str, Any]) -> Dict[str, str]:
     return {"type": "ask", "content": "Please share the invoice, order, account, receipt, serial, and security details needed to resolve this."}
 
 
-def main() -> None:
-    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-    HF_TOKEN = os.getenv("HF_TOKEN")
-    LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
-    task_name = os.getenv("TASK_NAME", "hard").strip().lower()
-    if task_name not in {"easy", "medium", "hard"}:
-        task_name = "hard"
+def clamp_score(value: float) -> float:
+    return min(max(value, 0.05), 0.95)
 
-    client = None
-    if HF_TOKEN:
-        client = OpenAI(
-            base_url=API_BASE_URL,
-            api_key=HF_TOKEN,
-            timeout=float(os.getenv("OPENAI_TIMEOUT", "2")),
-            max_retries=0,
-        )
+
+def run_episode(client: OpenAI | None, model_name: str, task_name: str) -> None:
     env = CustomerSupportEnv(task=task_name)
     observation = env.reset()
     rewards: List[float] = []
     model_available = client is not None
 
-    print(f"[START] task={task_name} env=CustomerSupportEnv model={MODEL_NAME}", flush=True)
+    print(f"[START] task={task_name} env=CustomerSupportEnv model={model_name}", flush=True)
     done = False
     step_idx = 0
-    info: Dict[str, Any] = {"score": 0.0}
     try:
         while not done and step_idx < env.task.max_steps:
             step_idx += 1
             if model_available and client is not None:
                 try:
-                    action = model_action(client, MODEL_NAME, observation, step_idx)
+                    action = model_action(client, model_name, observation, step_idx)
                 except Exception:
                     model_available = False
                     action = heuristic_action(observation)
@@ -156,11 +143,10 @@ def main() -> None:
 
             error_msg = "null"
             try:
-                observation, reward, done, info = env.step(action)
+                observation, reward, done, _ = env.step(action)
             except Exception as exc:
                 reward = 0.05
                 done = True
-                info = {"score": 0.05}
                 error_msg = compact_json(str(exc))
 
             rewards.append(float(reward))
@@ -173,9 +159,34 @@ def main() -> None:
         env.close()
 
     success = "true" if bool(observation.get("resolved")) else "false"
-    score = max(0.0, min(1.0, float(info.get("score", 0.0))))
+    max_total_reward = max(1, len(rewards))
+    score = clamp_score(sum(rewards) / max_total_reward)
     reward_str = ",".join(f"{reward:.2f}" for reward in rewards)
     print(f"[END] success={success} steps={step_idx} score={score:.2f} rewards={reward_str}", flush=True)
+
+
+def main() -> None:
+    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+    HF_TOKEN = os.getenv("HF_TOKEN")
+    LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+    task_name = os.getenv("TASK_NAME", "").strip().lower()
+
+    client = None
+    if HF_TOKEN:
+        client = OpenAI(
+            base_url=API_BASE_URL,
+            api_key=HF_TOKEN,
+            timeout=float(os.getenv("OPENAI_TIMEOUT", "2")),
+            max_retries=0,
+        )
+    if task_name in {"easy", "medium", "hard"}:
+        task_names = [task_name]
+    else:
+        task_names = ["easy", "medium", "hard"]
+
+    for current_task in task_names:
+        run_episode(client, MODEL_NAME, current_task)
 
 
 if __name__ == "__main__":
