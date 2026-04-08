@@ -146,8 +146,7 @@ class CustomerSupportEnv:
         )
         event["reward"] = self._last_score
 
-        if self._state.resolved:
-            self._done = True
+        self._done = True
 
         return self._public_observation(), self._last_score, self._done, {
             "score": self._last_score,
