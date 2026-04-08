@@ -1,6 +1,9 @@
 from graders.medium import grade as grade_medium
 from models.schemas import Task
 
+name = "medium"
+grader = grade_medium
+
 
 TASK = Task(
     task_id="medium_shipping_refund_address",
@@ -27,8 +30,12 @@ TASK = Task(
 )
 
 TASK_DEF = {
-    "name": "medium",
+    "name": name,
     "query": TASK.customer_query,
-    "grader": grade_medium,
+    "grader": grader,
     "task": TASK,
 }
+
+query = TASK.customer_query
+TASKS = {name: TASK}
+tasks = [TASK_DEF]

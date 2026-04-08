@@ -1,6 +1,9 @@
 from graders.easy import grade as grade_easy
 from models.schemas import Task
 
+name = "easy"
+grader = grade_easy
+
 
 TASK = Task(
     task_id="easy_billing_overcharge",
@@ -23,8 +26,12 @@ TASK = Task(
 )
 
 TASK_DEF = {
-    "name": "easy",
+    "name": name,
     "query": TASK.customer_query,
-    "grader": grade_easy,
+    "grader": grader,
     "task": TASK,
 }
+
+query = TASK.customer_query
+TASKS = {name: TASK}
+tasks = [TASK_DEF]

@@ -1,6 +1,9 @@
 from graders.hard import grade as grade_hard
 from models.schemas import Task
 
+name = "hard"
+grader = grade_hard
+
 
 TASK = Task(
     task_id="hard_security_defect_warranty_angry",
@@ -33,8 +36,12 @@ TASK = Task(
 )
 
 TASK_DEF = {
-    "name": "hard",
+    "name": name,
     "query": TASK.customer_query,
-    "grader": grade_hard,
+    "grader": grader,
     "task": TASK,
 }
+
+query = TASK.customer_query
+TASKS = {name: TASK}
+tasks = [TASK_DEF]
