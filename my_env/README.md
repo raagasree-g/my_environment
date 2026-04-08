@@ -58,6 +58,12 @@ The project includes three deterministic tasks:
 - Medium: shipping delay, address correction, and refund request in a slightly ambiguous query
 - Hard: angry premium customer with product defect, warranty claim, and account security risk, plus misleading signals
 
+Task and grader registration is exposed in three places for validator compatibility:
+
+- `tasks/easy.py`, `tasks/medium.py`, `tasks/hard.py`
+- `tasks/__init__.py`
+- `task_config.yaml`
+
 ## Reward Design
 
 Rewards are trajectory-shaped rather than binary and are returned to agents in the normalized range `[0, 1]`:

@@ -1,0 +1,19 @@
+tasks:
+  - name: easy
+    task_module: tasks.easy
+    grader_module: graders.easy
+    grader_function: grade
+    enabled: true
+    expected_score_range: [0.2, 0.4]
+  - name: medium
+    task_module: tasks.medium
+    grader_module: graders.medium
+    grader_function: grade
+    enabled: true
+    expected_score_range: [0.5, 0.7]
+  - name: hard
+    task_module: tasks.hard
+    grader_module: graders.hard
+    grader_function: grade
+    enabled: true
+    expected_score_range: [0.75, 0.95]
