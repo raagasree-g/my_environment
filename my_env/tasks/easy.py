@@ -22,6 +22,7 @@ TASKS = {
             "billing_overcharge": ["refund", "reverse", "credit", "billing adjustment", "remove duplicate"],
         },
         max_steps=6,
+        grader=grade_easy,
     ),
     "medium": Task(
         task_id="medium_shipping_refund_address",
@@ -44,6 +45,7 @@ TASKS = {
             "refund_request": ["refund", "return authorization", "refund eligibility", "credit"],
         },
         max_steps=8,
+        grader=grade_medium,
     ),
     "hard": Task(
         task_id="hard_security_defect_warranty_angry",
@@ -72,6 +74,7 @@ TASKS = {
             "Premium angry customers deserve urgency, but escalation alone is incomplete.",
         ],
         max_steps=9,
+        grader=grade_hard,
     ),
 }
 
@@ -85,6 +88,16 @@ TASKS_WITH_GRADERS = {
     name: {"task": task, "grader": TASK_GRADERS[name]}
     for name, task in TASKS.items()
 }
+
+tasks = [
+    {
+        "name": name,
+        "query": task.customer_query,
+        "grader": TASK_GRADERS[name],
+        "task": task,
+    }
+    for name, task in TASKS.items()
+]
 
 # Backward-compatible single-task export for older imports.
 TASK = TASKS["easy"]

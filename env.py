@@ -3,9 +3,8 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Optional, Tuple
 
-from graders.grader import grade
 from models.schemas import SupportState, Task, action_to_dict, contains_any, normalize_issue_text
-from tasks import TASKS
+from tasks import TASKS, TASK_GRADERS
 
 
 def _normalize_reward(raw_reward: float) -> float:
@@ -22,6 +21,7 @@ class CustomerSupportEnv:
             raise ValueError(f"Unknown task '{task}'")
         self.task_name = task
         self.task: Task = TASKS[task]
+        self.grader = self.task.grader or TASK_GRADERS[task]
         self._state: Optional[SupportState] = None
         self._done = False
         self._last_score = 0.0
@@ -109,7 +109,7 @@ class CustomerSupportEnv:
 
         self._state.conversation_history.append(event)
 
-        self._last_score = grade(
+        self._last_score = self.grader(
             self.task,
             self._state.to_full_state(),
             self._state.conversation_history,

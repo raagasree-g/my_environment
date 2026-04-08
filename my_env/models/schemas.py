@@ -37,6 +37,15 @@ class Task:
     acceptable_resolutions: Dict[Issue, List[str]]
     misleading_signals: List[str] = field(default_factory=list)
     max_steps: int = 8
+    grader: Optional[Any] = None
+
+    @property
+    def name(self) -> str:
+        return self.difficulty
+
+    @property
+    def query(self) -> str:
+        return self.customer_query
 
 
 @dataclass
