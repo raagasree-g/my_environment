@@ -102,7 +102,7 @@ def heuristic_action(observation: Dict[str, Any]) -> Dict[str, str]:
         }
 
     if detected == {"billing_overcharge"}:
-        return {"type": "resolve", "content": "Reverse the duplicate charge and issue a refund or billing adjustment for the extra transaction."}
+        return {"type": "resolve", "content": "Reverse the duplicate charge and apply a billing adjustment credit for the extra transaction."}
     if {"shipping_delay", "address_correction", "refund_request"}.issubset(detected):
         return {
             "type": "resolve",
