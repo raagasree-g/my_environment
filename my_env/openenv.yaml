@@ -1,40 +1,79 @@
-name: intelligent-customer-support-decision-system
-version: 1.0.0
-description: Multi-step RL environment for realistic customer support issue detection, clarification, resolution, and escalation decisions.
-entrypoint: env:CustomerSupportEnv
-factory: env:make_env
-tasks:
-  - easy
-  - medium
-  - hard
-observation_space:
-  customer_query: string
-  detected_issues: list[string]
-  customer_type: enum[normal,premium]
-  sentiment: enum[calm,angry]
-  conversation_history: list[object]
-  time_elapsed: int
-  resolved: bool
-  escalated: bool
-hidden_state:
-  true_issues: list[string]
-action_space:
-  type: enum[classify,ask,resolve,escalate]
-  content: string
-reward:
-  range: [0.05, 0.95]
-  type: trajectory-shaped
-  description: Rewards correct issue detection, useful clarification, complete resolution, appropriate escalation, and efficiency; penalizes false classifications, premature resolution, unnecessary escalation, and excessive steps. Public rewards and grader scores are clamped to the strict non-binary interval (0, 1).
-grader:
-  module: graders.grader
-  function: grade
-task_graders:
+spec_version: 1
+name: intelligent_customer_support_decision_system
+description: Multi-step customer support coordination environment for realistic issue classification, clarification, escalation, and resolution.
+version: 0.1.0
+type: space
+runtime: fastapi
+app: server.app:app
+port: 7860
+action: Action
+observation: Observation
+tags:
+  - openenv
+  - customer-support
+  - rl-environment
+  - decision-making
+
+graders:
   easy:
-    module: graders.easy
-    function: grade
+    type: python
+    entrypoint: graders:grade_easy_episode
+    ground_truth:
+      task: easy
   medium:
-    module: graders.medium
-    function: grade
+    type: python
+    entrypoint: graders:grade_medium_episode
+    ground_truth:
+      task: medium
   hard:
-    module: graders.hard
-    function: grade
+    type: python
+    entrypoint: graders:grade_hard_episode
+    ground_truth:
+      task: hard
+
+tasks:
+  - id: easy
+    difficulty: easy
+    description: Resolve a clear duplicate billing charge for a normal customer.
+    max_steps: 6
+    ground_truth:
+      true_issues:
+        - billing_overcharge
+    grader:
+      type: python
+      entrypoint: graders:grade_easy_episode
+      score_range: [0.0, 1.0]
+      score_key: score
+      success_condition: returns a valid graded duplicate billing handling episode
+
+  - id: medium
+    difficulty: medium
+    description: Handle a delayed order with address correction and refund request.
+    max_steps: 8
+    ground_truth:
+      true_issues:
+        - shipping_delay
+        - address_correction
+        - refund_request
+    grader:
+      type: python
+      entrypoint: graders:grade_medium_episode
+      score_range: [0.0, 1.0]
+      score_key: score
+      success_condition: returns a valid graded multi-issue fulfillment support episode
+
+  - id: hard
+    difficulty: hard
+    description: Handle a premium angry customer with product defect, warranty claim, and account security risk.
+    max_steps: 9
+    ground_truth:
+      true_issues:
+        - product_defect
+        - warranty_claim
+        - account_security
+    grader:
+      type: python
+      entrypoint: graders:grade_hard_episode
+      score_range: [0.0, 1.0]
+      score_key: score
+      success_condition: returns a valid graded high-severity support coordination episode
