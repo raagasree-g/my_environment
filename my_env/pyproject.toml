@@ -5,10 +5,27 @@ description = "Customer Support RL Environment"
 requires-python = ">=3.10"
 dependencies = [
     "openenv-core>=0.2.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
+    "openai>=1.0.0",
+    "PyYAML>=6.0",
 ]
 
 [project.scripts]
 server = "server.app:main"
 
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["client", "env", "inference"]
+
+[tool.setuptools.packages.find]
+include = ["graders*", "models*", "server*", "tasks*"]
+
 [tool.openenv]
 entrypoint = "env.py"
+
+[tool.uv]
+package = true

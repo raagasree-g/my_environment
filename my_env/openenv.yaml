@@ -5,6 +5,7 @@ version: 0.1.0
 type: space
 runtime: fastapi
 app: server.app:app
+entrypoint: server.environment:CustomerSupportOpenEnv
 port: 7860
 action: Action
 observation: Observation

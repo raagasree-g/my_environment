@@ -121,10 +121,9 @@ def clamp_score(value: float) -> float:
 
 
 def main() -> None:
-    API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-    MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
+    API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
+    MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
     HF_TOKEN = os.getenv("HF_TOKEN")
-    LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
     client = None
     if HF_TOKEN:
         client = OpenAI(
