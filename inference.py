@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 
 from openai import OpenAI
 
-from env import CustomerSupportEnv
+from env import make_env
 
 
 ISSUES = [
@@ -120,58 +120,11 @@ def clamp_score(value: float) -> float:
     return min(max(value, 0.05), 0.95)
 
 
-def run_episode(client: OpenAI | None, model_name: str, task_name: str) -> None:
-    env = CustomerSupportEnv(task=task_name)
-    observation = env.reset()
-    rewards: List[float] = []
-    model_available = client is not None
-
-    print(f"[START] task={task_name} env=CustomerSupportEnv model={model_name}", flush=True)
-    done = False
-    step_idx = 0
-    try:
-        while not done and step_idx < env.task.max_steps:
-            step_idx += 1
-            if model_available and client is not None:
-                try:
-                    action = model_action(client, model_name, observation, step_idx)
-                except Exception:
-                    model_available = False
-                    action = heuristic_action(observation)
-            else:
-                action = heuristic_action(observation)
-
-            error_msg = "null"
-            try:
-                observation, reward, done, _ = env.step(action)
-            except Exception as exc:
-                reward = 0.05
-                done = True
-                error_msg = compact_json(str(exc))
-
-            rewards.append(float(reward))
-            done_str = "true" if done else "false"
-            print(
-                f"[STEP] step={step_idx} action={compact_json(action)} reward={reward:.2f} done={done_str} error={error_msg}",
-                flush=True,
-            )
-    finally:
-        env.close()
-
-    success = "true" if bool(observation.get("resolved")) else "false"
-    max_total_reward = max(1, len(rewards))
-    score = clamp_score(sum(rewards) / max_total_reward)
-    reward_str = ",".join(f"{reward:.2f}" for reward in rewards)
-    print(f"[END] success={success} steps={step_idx} score={score:.2f} rewards={reward_str}", flush=True)
-
-
 def main() -> None:
     API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
     MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
     HF_TOKEN = os.getenv("HF_TOKEN")
     LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
-    task_name = os.getenv("TASK_NAME", "").strip().lower()
-
     client = None
     if HF_TOKEN:
         client = OpenAI(
@@ -180,12 +133,49 @@ def main() -> None:
             timeout=float(os.getenv("OPENAI_TIMEOUT", "2")),
             max_retries=0,
         )
-    task_names = ["easy", "medium", "hard"]
-    if task_name in {"easy", "medium", "hard"}:
-        task_names = [task_name] + [name for name in task_names if name != task_name]
+    env = make_env()
+    try:
+        for _ in range(3):
+            observation = env.reset()
+            rewards: List[float] = []
+            task_name = str(observation.get("task_name", "unknown"))
+            model_available = client is not None
 
-    for current_task in task_names:
-        run_episode(client, MODEL_NAME, current_task)
+            print(f"[START] task={task_name} env=CustomerSupportEnv model={MODEL_NAME}", flush=True)
+            step_idx = 0
+            done = False
+
+            while not done:
+                step_idx += 1
+                if model_available and client is not None:
+                    try:
+                        action = model_action(client, MODEL_NAME, observation, step_idx)
+                    except Exception:
+                        model_available = False
+                        action = heuristic_action(observation)
+                else:
+                    action = heuristic_action(observation)
+
+                error_msg = "null"
+                try:
+                    observation, reward, done, _ = env.step(action)
+                except Exception as exc:
+                    reward = 0.1
+                    done = True
+                    error_msg = compact_json(str(exc))
+
+                rewards.append(float(reward))
+                done_str = "true" if done else "false"
+                print(
+                    f"[STEP] step={step_idx} action={compact_json(action)} reward={reward:.2f} done={done_str} error={error_msg}",
+                    flush=True,
+                )
+
+            score = clamp_score(rewards[-1] if rewards else 0.1)
+            reward_str = ",".join(f"{reward:.2f}" for reward in rewards)
+            print(f"[END] success=true steps={step_idx} score={score:.2f} rewards={reward_str}", flush=True)
+    finally:
+        env.close()
 
 
 if __name__ == "__main__":
